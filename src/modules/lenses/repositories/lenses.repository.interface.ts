@@ -4,7 +4,6 @@ import type {
 	PrescriptionRangeData,
 	CreateLensProduct,
 	UpdateLensProduct,
-	LensProductResponse,
 } from '@/modules/lenses/schemas/lenses.schemas.ts'
 
 /**
@@ -14,6 +13,9 @@ import type {
  * This interface allows for multiple implementations:
  * - PrismaLensesRepository (SQLite, PostgreSQL, MySQL)
  * - InMemoryLensesRepository (Testing)
+ *
+ * NOTE: Repository methods return RAW data types (Prisma objects or plain data).
+ * The Service layer is responsible for transforming to DTOs/Response types.
  */
 export interface ILensesRepository {
 	/**
@@ -35,44 +37,45 @@ export interface ILensesRepository {
 	 * Find available lens products for a prescription range with optional filters
 	 * @param prescriptionRangeId - Prescription range ID
 	 * @param filters - Optional filters (material, coatings, etc.)
-	 * @returns Promise with array of lens products
+	 * @returns Promise with array of lens products (raw data)
 	 */
 	findProductsByRange(prescriptionRangeId: string, filters: Filters): Promise<LensProductData[]>
 
 	/**
 	 * Create a new lens product
 	 * @param data - Lens product data
-	 * @returns Promise with created lens product
+	 * @returns Promise with created lens product (raw data)
 	 */
-	create(data: CreateLensProduct): Promise<LensProductResponse>
+	create(data: CreateLensProduct): Promise<LensProductData>
 
 	/**
 	 * Find lens product by ID
 	 * @param id - Lens product ID
-	 * @returns Promise with lens product or null
+	 * @returns Promise with lens product or null (raw data)
 	 */
-	findById(id: string): Promise<LensProductResponse | null>
+	findById(id: string): Promise<LensProductData | null>
 
 	/**
 	 * Find lens product by SKU
 	 * @param sku - Lens product SKU
-	 * @returns Promise with lens product or null
+	 * @returns Promise with lens product or null (raw data)
 	 */
-	findBySku(sku: string): Promise<LensProductResponse | null>
+	findBySku(sku: string): Promise<LensProductData | null>
 
 	/**
-	 * Get all lens products (no pagination)
-	 * @returns Promise with array of lens products
+	 * Get all lens products with optional prescriptionRange relation
+	 * @param includeRelations - Whether to include prescriptionRange relation
+	 * @returns Promise with array of lens products (raw data, possibly with relations)
 	 */
-	findAll(): Promise<LensProductResponse[]>
+	findAll(includeRelations?: boolean): Promise<LensProductData[]>
 
 	/**
 	 * Update lens product
 	 * @param id - Lens product ID
 	 * @param data - Lens product data to update
-	 * @returns Promise with updated lens product
+	 * @returns Promise with updated lens product (raw data)
 	 */
-	update(id: string, data: UpdateLensProduct): Promise<LensProductResponse>
+	update(id: string, data: UpdateLensProduct): Promise<LensProductData>
 
 	/**
 	 * Delete lens product

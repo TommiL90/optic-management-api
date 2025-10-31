@@ -52,6 +52,19 @@ const lensPricingSchema = z.object({
 	finalPrice: z.number().describe('Precio final al público'),
 })
 
+// Prescription Range schema for responses
+const prescriptionRangeSchema = z.object({
+	id: z.string().uuid().describe('ID del rango'),
+	code: z.string().describe('Código del rango (ej: 42-42)'),
+	description: z.string().describe('Descripción del rango'),
+	minEyeMaxSphere: z.number().describe('Esfera máxima del ojo de menor complejidad'),
+	minEyeMaxCylinder: z.number().describe('Cilindro máximo del ojo de menor complejidad'),
+	maxEyeMaxSphere: z.number().describe('Esfera máxima del ojo de mayor complejidad'),
+	maxEyeMaxCylinder: z.number().describe('Cilindro máximo del ojo de mayor complejidad'),
+	createdAt: z.string().datetime().describe('Fecha de creación'),
+	updatedAt: z.string().datetime().describe('Fecha de última actualización'),
+})
+
 export const lensProductResponseSchema = z.object({
 	id: z.string().uuid().describe('ID del producto'),
 	sku: z.string().describe('SKU del producto'),
@@ -67,6 +80,11 @@ export const lensProductResponseSchema = z.object({
 	prescriptionRangeId: z.string().uuid().describe('ID del rango de prescripción'),
 	createdAt: z.string().datetime().describe('Fecha de creación'),
 	updatedAt: z.string().datetime().describe('Fecha de última actualización'),
+})
+
+// Extended schema that includes prescriptionRange relation
+export const lensProductWithRangeResponseSchema = lensProductResponseSchema.extend({
+	prescriptionRange: prescriptionRangeSchema.optional().describe('Rango de prescripción asociado'),
 })
 
 const prescriptionRangeUsedSchema = z.object({
@@ -188,3 +206,5 @@ export type CreateLensProduct = z.infer<typeof createLensProductSchema>
 export type UpdateLensProduct = z.infer<typeof updateLensProductSchema>
 export type LensProductIdParam = z.infer<typeof lensProductIdParamSchema>
 export type LensProductsResponse = z.infer<typeof lensProductsResponseSchema>
+export type LensProductWithRangeResponse = z.infer<typeof lensProductWithRangeResponseSchema>
+export type PrescriptionRange = z.infer<typeof prescriptionRangeSchema>

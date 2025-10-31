@@ -1,15 +1,16 @@
 import { PrescriptionRangeNotFoundException, NotFoundException, ConflictException } from '@/core/errors/app-errors.ts'
 import { Logger } from '@/core/utils/logger.util.ts'
 import type { ILensesRepository } from '@/modules/lenses/repositories/lenses.repository.interface.ts'
-import type {
-	LensProductData,
-	LensProductResponse,
-	Prescription,
-	QuoteLensesRequest,
-	QuoteLensesResponse,
-	CreateLensProduct,
-	UpdateLensProduct,
-	LensProductsResponse,
+import {
+	lensProductResponseSchema,
+	type LensProductData,
+	type LensProductResponse,
+	type Prescription,
+	type QuoteLensesRequest,
+	type QuoteLensesResponse,
+	type CreateLensProduct,
+	type UpdateLensProduct,
+	type LensProductsResponse,
 } from '@/modules/lenses/schemas/lenses.schemas.ts'
 
 /**
@@ -73,12 +74,12 @@ export class LensesService {
 	}
 
 	/**
-	 * Maps lens product data to response format
+	 * Maps lens product data to response format using Zod schema
 	 * @param product - Lens product data from repository
 	 * @returns Lens product response DTO
 	 */
 	private mapLensProductToResponse(product: LensProductData): LensProductResponse {
-		return {
+		const mapped = {
 			id: product.id,
 			sku: product.sku,
 			name: product.name,
@@ -101,9 +102,12 @@ export class LensesService {
 			observations: product.observations,
 			available: product.available,
 			prescriptionRangeId: product.prescriptionRangeId,
-			createdAt: product.createdAt.toISOString(),
-			updatedAt: product.updatedAt.toISOString(),
+			createdAt: product.createdAt instanceof Date ? product.createdAt.toISOString() : product.createdAt,
+			updatedAt: product.updatedAt instanceof Date ? product.updatedAt.toISOString() : product.updatedAt,
 		}
+
+		// Validate with Zod schema to ensure type safety
+		return lensProductResponseSchema.parse(mapped)
 	}
 
 	/**
@@ -170,7 +174,8 @@ export class LensesService {
 				})
 			}
 
-			const product = await this.lensesRepository.create(payload)
+			const rawProduct = await this.lensesRepository.create(payload)
+			const product = this.mapLensProductToResponse(rawProduct)
 
 			Logger.businessLogic('LensesService: createLensProduct completed', {
 				operation: 'createLensProduct',
@@ -199,10 +204,12 @@ export class LensesService {
 		})
 
 		try {
-			const product = await this.lensesRepository.findById(id)
-			if (!product) {
+			const rawProduct = await this.lensesRepository.findById(id)
+			if (!rawProduct) {
 				throw new NotFoundException('Lens Product', id)
 			}
+
+			const product = this.mapLensProductToResponse(rawProduct)
 
 			Logger.businessLogic('LensesService: findLensProductById completed', {
 				operation: 'findLensProductById',
@@ -229,7 +236,8 @@ export class LensesService {
 		})
 
 		try {
-			const products = await this.lensesRepository.findAll()
+			const rawProducts = await this.lensesRepository.findAll(true) // Include prescriptionRange
+			const products = rawProducts.map(p => this.mapLensProductToResponse(p))
 
 			const result: LensProductsResponse = {
 				products,
@@ -278,7 +286,8 @@ export class LensesService {
 				}
 			}
 
-			const updatedProduct = await this.lensesRepository.update(id, updateData)
+			const rawUpdatedProduct = await this.lensesRepository.update(id, updateData)
+			const updatedProduct = this.mapLensProductToResponse(rawUpdatedProduct)
 
 			Logger.businessLogic('LensesService: updateLensProduct completed', {
 				operation: 'updateLensProduct',

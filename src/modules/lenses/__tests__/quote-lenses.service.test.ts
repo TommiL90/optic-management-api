@@ -30,20 +30,20 @@ describe('Quote Lenses Service', () => {
 		const range42 = lensesRepository.addPrescriptionRange({
 			code: '42-42',
 			description: 'Hasta 4 esf / 2 cil en ambos ojos',
-			odMaxSphere: 4,
-			odMaxCylinder: 2,
-			oiMaxSphere: 4,
-			oiMaxCylinder: 2,
+			minEyeMaxSphere: 4,
+			minEyeMaxCylinder: 2,
+			maxEyeMaxSphere: 4,
+			maxEyeMaxCylinder: 2,
 		})
 
 		// Add a prescription range for testing (4-4 / 4-4)
 		const range44 = lensesRepository.addPrescriptionRange({
 			code: '44-44',
 			description: 'Hasta 4 esf / 4 cil en ambos ojos',
-			odMaxSphere: 4,
-			odMaxCylinder: 4,
-			oiMaxSphere: 4,
-			oiMaxCylinder: 4,
+			minEyeMaxSphere: 4,
+			minEyeMaxCylinder: 4,
+			maxEyeMaxSphere: 4,
+			maxEyeMaxCylinder: 4,
 		})
 
 		// Add products for range 42-42
@@ -597,7 +597,7 @@ describe('Quote Lenses Service', () => {
 											deliveryDays: 3,
 											observations: 'Some observations',
 											available: true,
-											prescriptionRangeId: 'range-id',
+											prescriptionRangeId: lensesRepository.prescriptionRanges[0].id, // Use actual UUID from setup
 										}
 										
 										return lensesService.createLensProduct(productData).then(response => {
@@ -622,7 +622,7 @@ describe('Quote Lenses Service', () => {
 											expect(response.deliveryDays).toBe(3)
 											expect(response.observations).toBe('Some observations')
 											expect(response.available).toBe(true)
-											expect(response.prescriptionRangeId).toBe('range-id')
+											expect(response.prescriptionRangeId).toBe(lensesRepository.prescriptionRanges[0].id)
 											expect(response.createdAt).toBeDefined()
 											expect(response.updatedAt).toBeDefined()
 										})
