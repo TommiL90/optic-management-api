@@ -11,7 +11,7 @@ export default defineConfig({
 	treeshake: true,
 	splitting: false,
 	dts: false,
-	noExternal: [/(.*)/],
+	external: ['pino-pretty', '@fastify/swagger', '@fastify/swagger-ui', '@fastify/cors', '@fastify/multipart'],
 	tsconfig: './tsconfig.json',
 	esbuildOptions(options) {
 		options.alias = {

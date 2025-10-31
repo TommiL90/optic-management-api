@@ -7,8 +7,7 @@
   "scripts": {
     "start:dev": "tsx watch src/server.ts",
     "start": "node build/server.cjs",
-    "build": "tsup src --out-dir build",
-    "render-build": "pnpm prisma:generate && pnpm build",
+    "build": "pnpm prisma:generate && tsup",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
