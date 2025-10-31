@@ -11,7 +11,7 @@ API REST para la gestión de ópticas, desarrollada con **Fastify**, **TypeScrip
 - **Testing**: Vitest con cobertura completa (Unit + E2E)
 - **Documentación**: Swagger/OpenAPI automática
 - **Logging**: Pino con configuración estructurada
-- **Despliegue**: Optimizado para Vercel (serverless)
+- **Despliegue**: Optimizado para Render con Turso
 
 ## 📋 Módulos Disponibles
 
@@ -81,22 +81,9 @@ LOG_PRETTY=false
 DATABASE_URL="file:./dev.db"
 ```
 
-### 3.1. Configurar base de datos con Turso (Recomendado)
+### 3.1. Configurar base de datos con Turso (Opcional para producción)
 
-Para usar Turso como base de datos en producción:
-
-```bash
-# Ejecutar script de configuración automática
-pnpm setup:turso
-```
-
-Este script:
-- Instala Turso CLI si no está disponible
-- Te guía para hacer login en Turso
-- Crea la base de datos
-- Configura las variables de entorno
-- Ejecuta las migraciones
-- Genera el cliente Prisma
+Para desarrollo local, puedes usar SQLite (por defecto). Para producción en Render, se recomienda usar Turso. Consulta la sección de "Despliegue en Render" para instrucciones completas.
 
 ### 4. Configurar base de datos
 
@@ -150,85 +137,118 @@ pnpm test:watch
 - **E2E Tests**: `src/modules/*/__tests__/*.routes.e2e-test.ts`
 - **Repository Tests**: `src/modules/*/__tests__/repositories/`
 
-## 🚀 Despliegue en Vercel
+## 🚀 Despliegue en Render
 
 ### 1. Preparación del proyecto
 
-El proyecto ya está configurado para Vercel con:
-- ✅ `vercel.json` - Configuración de Vercel
-- ✅ `api/index.ts` - Handler serverless
+El proyecto está configurado para Render con:
 - ✅ Scripts de build optimizados
-- ✅ Soporte para PostgreSQL
+- ✅ Soporte para Turso (Remote SQLite)
+- ✅ Servidor Fastify de larga duración
+- ✅ Swagger habilitado en producción
 
-### 2. Configurar base de datos en producción
+### 2. Configurar base de datos en producción (Turso)
 
-**Opción A: Turso (Recomendado)**
+**Turso** es un servicio de base de datos SQLite distribuido, ideal para aplicaciones modernas.
 
-1. **Crear cuenta en Turso**: Ve a [turso.tech](https://turso.tech) y crea una cuenta
-2. **Instalar Turso CLI**: 
+1. **Crear cuenta en Turso**: Ve a [turso.tech](https://turso.tech) y crea una cuenta gratuita
+
+2. **Instalar Turso CLI**:
    ```bash
+   # macOS/Linux
    curl -sSfL https://get.tur.so/install.sh | bash
+
+   # Windows (PowerShell)
+   irm https://get.tur.so/install.ps1 | iex
    ```
+
 3. **Login en Turso**:
    ```bash
    turso auth login
    ```
+
 4. **Crear base de datos**:
    ```bash
-   turso db create optic-management
+   turso db create optic-management-db
    ```
-5. **Obtener URL y token**:
+
+5. **Obtener URL de la base de datos**:
    ```bash
-   turso db show optic-management --url
-   turso auth token
+   turso db show optic-management-db --url
+   ```
+   Output ejemplo: `libsql://optic-management-db-[your-org].turso.io`
+
+6. **Crear token de autenticación**:
+   ```bash
+   turso db tokens create optic-management-db
+   ```
+   Output: Un token largo que debes guardar de forma segura
+
+7. **Construir DATABASE_URL completo**:
+   ```
+   libsql://optic-management-db-[your-org].turso.io?authToken=[your-token]
    ```
 
-**Opción B: Base de datos externa**
+### 3. Crear Web Service en Render
 
-Usa cualquier proveedor de SQLite compatible (Turso, PlanetScale, etc.)
+1. Ve a [Render Dashboard](https://dashboard.render.com/) y crea una cuenta si no tienes una
 
-### 3. Configurar variables de entorno en Vercel
+2. Click en **"New +"** → **"Web Service"**
 
-En el dashboard de Vercel:
+3. Conecta tu repositorio de GitHub/GitLab
 
-1. Ve a tu proyecto → Settings → Environment Variables
-2. Agrega las siguientes variables:
+4. Configura el servicio con los siguientes valores:
 
-```env
-NODE_ENV=production
-DATABASE_URL=libsql://optic-management-[your-db-name].turso.io
-TURSO_AUTH_TOKEN=your-turso-auth-token
-LOG_LEVEL=info
-```
+   - **Name**: `optic-management-api` (o el nombre que prefieras)
+   - **Region**: Selecciona la región más cercana a tus usuarios
+   - **Branch**: `main` (o tu rama principal)
+   - **Runtime**: `Node`
+   - **Build Command**:
+     ```bash
+     pnpm install && pnpm render-build
+     ```
+   - **Start Command**:
+     ```bash
+     pnpm start
+     ```
+   - **Instance Type**: `Free` (o el plan que necesites)
 
-### 4. Desplegar
+### 4. Configurar variables de entorno en Render
 
-**Opción A: Desde GitHub (Recomendado)**
+En la configuración del servicio, agrega las siguientes **Environment Variables**:
 
-1. Conecta tu repositorio de GitHub a Vercel
-2. Vercel detectará automáticamente la configuración
-3. El despliegue se ejecutará automáticamente
+| Variable | Valor | Descripción |
+|----------|-------|-------------|
+| `NODE_ENV` | `production` | Entorno de ejecución |
+| `PORT` | (auto) | Render lo asigna automáticamente |
+| `HOST` | `0.0.0.0` | Host para escuchar conexiones |
+| `LOG_LEVEL` | `info` | Nivel de logging |
+| `DATABASE_URL` | `libsql://...?authToken=...` | URL completa de Turso (paso 2.7) |
 
-**Opción B: Desde CLI**
-
-```bash
-# Instalar Vercel CLI
-npm i -g vercel
-
-# Login en Vercel
-vercel login
-
-# Desplegar
-vercel --prod
-```
+**Importante**: Asegúrate de que `DATABASE_URL` incluya el `authToken` en la URL.
 
 ### 5. Ejecutar migraciones en producción
 
-Las migraciones se ejecutan automáticamente durante el despliegue gracias al script `postinstall.js`. Si necesitas ejecutarlas manualmente:
+Antes del primer despliegue o después de cambios en el schema:
+
+**Opción A: Usando Turso CLI (Recomendado)**
 
 ```bash
-# Conectar a la base de datos de producción
-vercel env pull .env.production
+# Conectar a tu base de datos de Turso
+turso db shell optic-management-db
+
+# Dentro del shell, puedes verificar las tablas
+.tables
+
+# Salir
+.quit
+```
+
+Para aplicar migraciones, configura temporalmente tu `.env` local:
+
+```bash
+# En .env
+DATABASE_URL="libsql://optic-management-db-[your-org].turso.io?authToken=[your-token]"
 
 # Ejecutar migraciones
 pnpm prisma:migrate:deploy
@@ -237,12 +257,64 @@ pnpm prisma:migrate:deploy
 pnpm prisma:seed
 ```
 
-### 6. Verificar despliegue
+**Opción B: Desde Render Shell (después del deploy)**
+
+1. Ve a tu servicio en Render
+2. Click en **"Shell"** en el menú lateral
+3. Ejecutar:
+   ```bash
+   cd /opt/render/project/src
+   pnpm prisma:migrate:deploy
+   ```
+
+### 6. Desplegar
+
+Render detectará automáticamente los cambios en tu repositorio y desplegará:
+
+1. **Push a tu repositorio**:
+   ```bash
+   git add .
+   git commit -m "Configure for Render deployment"
+   git push origin main
+   ```
+
+2. **Render iniciará el build automáticamente**:
+   - Instalará dependencias
+   - Generará el cliente Prisma
+   - Compilará TypeScript
+   - Iniciará el servidor
+
+3. **Monitorear el despliegue**:
+   - Ve a la pestaña "Logs" en el dashboard de Render
+   - Verifica que no haya errores durante el build
+
+### 7. Verificar despliegue
 
 Una vez desplegado, tu API estará disponible en:
-- **API**: `https://tu-proyecto.vercel.app`
-- **Documentación**: `https://tu-proyecto.vercel.app/docs`
-- **Health Check**: `https://tu-proyecto.vercel.app/health`
+- **API**: `https://optic-management-api.onrender.com` (o tu URL personalizada)
+- **Documentación**: `https://optic-management-api.onrender.com/docs`
+- **Health Check**: `https://optic-management-api.onrender.com/health`
+
+**Prueba el health check**:
+```bash
+curl https://optic-management-api.onrender.com/health
+```
+
+Deberías recibir:
+```json
+{
+  "status": "ok",
+  "timestamp": "2025-10-31T..."
+}
+```
+
+### 8. Notas importantes sobre Render
+
+- **Cold Starts**: El plan gratuito de Render pone el servicio en suspensión después de 15 minutos de inactividad. La primera petición después puede tardar 30-60 segundos.
+- **Logs**: Accede a logs en tiempo real desde el dashboard de Render.
+- **SSL**: Render proporciona certificados SSL gratuitos automáticamente.
+- **Custom Domain**: Puedes agregar un dominio personalizado en la configuración del servicio.
+- **Escalado**: Puedes escalar verticalmente (más CPU/RAM) o horizontalmente (más instancias) desde el dashboard.
 
 ## 📚 Documentación de la API
 
@@ -252,7 +324,7 @@ La documentación interactiva está disponible en `/docs` cuando la aplicación 
 
 **Crear un usuario:**
 ```bash
-curl -X POST https://tu-api.vercel.app/users \
+curl -X POST https://tu-api.onrender.com/users \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Juan Pérez",
@@ -263,12 +335,12 @@ curl -X POST https://tu-api.vercel.app/users \
 
 **Obtener usuarios:**
 ```bash
-curl https://tu-api.vercel.app/users?page=1&pageSize=10
+curl https://tu-api.onrender.com/users?page=1&pageSize=10
 ```
 
 **Crear un producto de lente:**
 ```bash
-curl -X POST https://tu-api.vercel.app/lenses \
+curl -X POST https://tu-api.onrender.com/lenses \
   -H "Content-Type: application/json" \
   -d '{
     "sku": "LENS-001",
@@ -357,12 +429,8 @@ pnpm start:dev          # Servidor con hot reload
 pnpm start              # Servidor de producción
 
 # Build
-pnpm build              # Build para desarrollo
-pnpm build:vercel       # Build optimizado para Vercel
-pnpm vercel-build       # Build completo para Vercel
-
-# Base de datos
-pnpm setup:turso        # Configurar Turso automáticamente
+pnpm build              # Build para producción
+pnpm render-build       # Build completo para Render (prisma + build)
 
 # Testing
 pnpm test               # Tests unitarios
@@ -394,15 +462,21 @@ echo $DATABASE_URL
 
 # Regenerar cliente Prisma
 pnpm prisma:generate
+
+# Verificar conexión con Turso
+turso db shell optic-management-db
 ```
 
-**Error en Vercel deployment:**
+**Error en Render deployment:**
 ```bash
-# Verificar que las variables de entorno estén configuradas
-vercel env ls
+# Verificar variables de entorno en Render dashboard
+# Ir a: Service → Environment → Environment Variables
 
-# Revisar logs de build
-vercel logs
+# Revisar logs en tiempo real
+# Ir a: Service → Logs
+
+# Reiniciar el servicio manualmente
+# Ir a: Service → Manual Deploy → Deploy latest commit
 ```
 
 **Tests fallando:**
@@ -412,6 +486,16 @@ pnpm test --reporter=verbose
 
 # Ejecutar tests específicos
 pnpm test src/modules/users/__tests__/users.service.test.ts
+```
+
+**Build falla en Render:**
+```bash
+# Verificar que el comando de build sea correcto:
+# Build Command: pnpm install && pnpm render-build
+
+# Verificar que pnpm esté instalado correctamente
+# Agregar variable de entorno en Render:
+# ENABLE_PNPM=true
 ```
 
 ## 📄 Licencia

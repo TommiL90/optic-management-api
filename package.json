@@ -8,9 +8,7 @@
     "start:dev": "tsx watch src/server.ts",
     "start": "node build/server.cjs",
     "build": "tsup src --out-dir build",
-    "build:vercel": "tsup api/index.ts --out-dir api --format cjs --target es2020",
-    "vercel-build": "npm run prisma:generate && npm run build:vercel",
-    "postinstall": "node scripts/postinstall.js",
+    "render-build": "pnpm prisma:generate && pnpm build",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
@@ -24,9 +22,7 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "prisma:generate": "prisma generate",
-    "prisma:seed": "tsx prisma/seed.ts",
-    "setup:turso": "node scripts/setup-turso.js",
-    "dev:turso": "node scripts/dev-with-turso.js --turso"
+    "prisma:seed": "tsx prisma/seed.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -42,7 +38,6 @@
     "@biomejs/biome": "2.2.6",
     "@types/bcryptjs": "3.0.0",
     "@types/node": "24.7.2",
-    "@vercel/node": "3.0.0",
     "@vitest/coverage-v8": "3.2.4",
     "@vitest/ui": "3.2.4",
     "dotenv-cli": "10.0.0",
@@ -61,8 +56,9 @@
     "@fastify/multipart": "9.2.1",
     "@fastify/swagger": "9.5.2",
     "@fastify/swagger-ui": "5.2.3",
-    "@prisma/client": "6.17.1",
     "@libsql/client": "0.15.0",
+    "@prisma/adapter-libsql": "6.18.0",
+    "@prisma/client": "6.17.1",
     "bcryptjs": "3.0.2",
     "dotenv": "17.2.3",
     "fastify": "5.6.1",

@@ -9,6 +9,8 @@ generator client {
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
+  // For Turso migrations, use the same URL for both
+  directUrl = env("DATABASE_URL")
 }
 
 enum LensMaterial {
