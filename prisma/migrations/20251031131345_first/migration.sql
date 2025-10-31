@@ -1,0 +1,89 @@
+-- CreateEnum
+CREATE TYPE "LensMaterial" AS ENUM ('organico', 'policarbonato', 'mineral', 'adelgazado');
+
+-- CreateEnum
+CREATE TYPE "LensType" AS ENUM ('monofocal', 'bifocal', 'multifocal');
+
+-- CreateEnum
+CREATE TYPE "FrameType" AS ENUM ('cerrado', 'semicerrado', 'al_aire');
+
+-- CreateTable
+CREATE TABLE "User" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PrescriptionRange" (
+    "id" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "minEyeMaxSphere" DOUBLE PRECISION NOT NULL,
+    "minEyeMaxCylinder" DOUBLE PRECISION NOT NULL,
+    "maxEyeMaxSphere" DOUBLE PRECISION NOT NULL,
+    "maxEyeMaxCylinder" DOUBLE PRECISION NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "PrescriptionRange_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "LensProduct" (
+    "id" TEXT NOT NULL,
+    "sku" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "material" "LensMaterial" NOT NULL,
+    "tipo" "LensType" NOT NULL,
+    "frameType" "FrameType" NOT NULL,
+    "hasAntiReflective" BOOLEAN NOT NULL DEFAULT false,
+    "hasBlueFilter" BOOLEAN NOT NULL DEFAULT false,
+    "isPhotochromic" BOOLEAN NOT NULL DEFAULT false,
+    "hasUVProtection" BOOLEAN NOT NULL DEFAULT false,
+    "isPolarized" BOOLEAN NOT NULL DEFAULT false,
+    "isMirrored" BOOLEAN NOT NULL DEFAULT false,
+    "costPrice" INTEGER,
+    "basePrice" INTEGER NOT NULL,
+    "finalPrice" INTEGER NOT NULL,
+    "deliveryDays" INTEGER NOT NULL,
+    "observations" TEXT,
+    "available" BOOLEAN NOT NULL DEFAULT true,
+    "prescriptionRangeId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "LensProduct_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "PrescriptionRange_code_key" ON "PrescriptionRange"("code");
+
+-- CreateIndex
+CREATE INDEX "PrescriptionRange_minEyeMaxSphere_minEyeMaxCylinder_maxEyeM_idx" ON "PrescriptionRange"("minEyeMaxSphere", "minEyeMaxCylinder", "maxEyeMaxSphere", "maxEyeMaxCylinder");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "LensProduct_sku_key" ON "LensProduct"("sku");
+
+-- CreateIndex
+CREATE INDEX "LensProduct_prescriptionRangeId_idx" ON "LensProduct"("prescriptionRangeId");
+
+-- CreateIndex
+CREATE INDEX "LensProduct_material_idx" ON "LensProduct"("material");
+
+-- CreateIndex
+CREATE INDEX "LensProduct_frameType_idx" ON "LensProduct"("frameType");
+
+-- CreateIndex
+CREATE INDEX "LensProduct_available_idx" ON "LensProduct"("available");
+
+-- AddForeignKey
+ALTER TABLE "LensProduct" ADD CONSTRAINT "LensProduct_prescriptionRangeId_fkey" FOREIGN KEY ("prescriptionRangeId") REFERENCES "PrescriptionRange"("id") ON DELETE CASCADE ON UPDATE CASCADE;

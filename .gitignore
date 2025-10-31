@@ -119,7 +119,7 @@ playwright/.cache/
 .vitest/
 
 # Prisma
-.env.example
+.env.test
 
 # Docker
 .dockerignore

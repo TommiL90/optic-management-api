@@ -5,13 +5,13 @@ API REST para la gestión de ópticas, desarrollada con **Fastify**, **TypeScrip
 ## 🚀 Características
 
 - **Framework**: Fastify con TypeScript
-- **Base de datos**: Prisma ORM con Turso (producción) / SQLite (desarrollo)
+- **Base de datos**: Prisma ORM con PostgreSQL (producción) / SQLite (desarrollo)
 - **Validación**: Zod para schemas y validación de datos
 - **Arquitectura**: Modular con separación de responsabilidades (Handler → Service → Repository)
 - **Testing**: Vitest con cobertura completa (Unit + E2E)
 - **Documentación**: Swagger/OpenAPI automática
 - **Logging**: Pino con configuración estructurada
-- **Despliegue**: Optimizado para Render con Turso
+- **Despliegue**: Optimizado para Render con PostgreSQL
 
 ## 📋 Módulos Disponibles
 
@@ -78,12 +78,14 @@ PORT=3000
 HOST=0.0.0.0
 LOG_LEVEL=info
 LOG_PRETTY=false
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="file:./dev.db" # Desarrollo (SQLite por defecto)
+# Para PostgreSQL (producción o desarrollo):
+# DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DB_NAME?schema=public"
 ```
 
-### 3.1. Configurar base de datos con Turso (Opcional para producción)
+### 3.1. Configurar base de datos con PostgreSQL (Recomendado para producción)
 
-Para desarrollo local, puedes usar SQLite (por defecto). Para producción en Render, se recomienda usar Turso. Consulta la sección de "Despliegue en Render" para instrucciones completas.
+Para desarrollo local, puedes usar SQLite (por defecto). Para producción en Render u otra plataforma, se recomienda usar PostgreSQL. Consulta la sección de "Despliegue en Render" para instrucciones completas y la variable `DATABASE_URL` con formato PostgreSQL.
 
 ### 4. Configurar base de datos
 
@@ -143,51 +145,25 @@ pnpm test:watch
 
 El proyecto está configurado para Render con:
 - ✅ Scripts de build optimizados
-- ✅ Soporte para Turso (Remote SQLite)
+- ✅ Soporte para PostgreSQL gestionado
 - ✅ Servidor Fastify de larga duración
 - ✅ Swagger habilitado en producción
 
-### 2. Configurar base de datos en producción (Turso)
+### 2. Configurar base de datos en producción (PostgreSQL)
 
-**Turso** es un servicio de base de datos SQLite distribuido, ideal para aplicaciones modernas.
+Usa un servicio gestionado de PostgreSQL (por ejemplo, el add-on de PostgreSQL en Render) o cualquier proveedor (Neon, Supabase, RDS, etc.).
 
-1. **Crear cuenta en Turso**: Ve a [turso.tech](https://turso.tech) y crea una cuenta gratuita
+1. **Crear base de datos PostgreSQL**: En Render, crea un recurso de tipo "PostgreSQL" o provisiona en tu proveedor preferido.
 
-2. **Instalar Turso CLI**:
-   ```bash
-   # macOS/Linux
-   curl -sSfL https://get.tur.so/install.sh | bash
-
-   # Windows (PowerShell)
-   irm https://get.tur.so/install.ps1 | iex
+2. **Obtener `DATABASE_URL`**: Copia la cadena de conexión en formato:
+   ```
+   postgresql://USER:PASSWORD@HOST:PORT/DB_NAME?schema=public
    ```
 
-3. **Login en Turso**:
-   ```bash
-   turso auth login
-   ```
+3. **Ajustar Prisma para PostgreSQL**: En `prisma/schema.prisma`, cambia el `provider` del `datasource` a `postgresql` para producción (mantén SQLite para desarrollo si lo prefieres):
+   - `provider = "postgresql"`
 
-4. **Crear base de datos**:
-   ```bash
-   turso db create optic-management-db
-   ```
-
-5. **Obtener URL de la base de datos**:
-   ```bash
-   turso db show optic-management-db --url
-   ```
-   Output ejemplo: `libsql://optic-management-db-[your-org].turso.io`
-
-6. **Crear token de autenticación**:
-   ```bash
-   turso db tokens create optic-management-db
-   ```
-   Output: Un token largo que debes guardar de forma segura
-
-7. **Construir DATABASE_URL completo**:
-   ```
-   libsql://optic-management-db-[your-org].turso.io?authToken=[your-token]
-   ```
+4. **Configurar migraciones**: Usa los comandos de Prisma indicados más abajo para aplicar migraciones.
 
 ### 3. Crear Web Service en Render
 
@@ -223,41 +199,15 @@ En la configuración del servicio, agrega las siguientes **Environment Variables
 | `PORT` | (auto) | Render lo asigna automáticamente |
 | `HOST` | `0.0.0.0` | Host para escuchar conexiones |
 | `LOG_LEVEL` | `info` | Nivel de logging |
-| `DATABASE_URL` | `libsql://...?authToken=...` | URL completa de Turso (paso 2.7) |
+| `DATABASE_URL` | `postgresql://USER:PASSWORD@HOST:PORT/DB_NAME?schema=public` | URL de conexión de PostgreSQL |
 
-**Importante**: Asegúrate de que `DATABASE_URL` incluya el `authToken` en la URL.
+**Importante**: Asegúrate de que `DATABASE_URL` tenga credenciales válidas y apunte al esquema correcto (por defecto `public`).
 
 ### 5. Ejecutar migraciones en producción
 
 Antes del primer despliegue o después de cambios en el schema:
 
-**Opción A: Usando Turso CLI (Recomendado)**
-
-```bash
-# Conectar a tu base de datos de Turso
-turso db shell optic-management-db
-
-# Dentro del shell, puedes verificar las tablas
-.tables
-
-# Salir
-.quit
-```
-
-Para aplicar migraciones, configura temporalmente tu `.env` local:
-
-```bash
-# En .env
-DATABASE_URL="libsql://optic-management-db-[your-org].turso.io?authToken=[your-token]"
-
-# Ejecutar migraciones
-pnpm prisma:migrate:deploy
-
-# (Opcional) Poblar con datos iniciales
-pnpm prisma:seed
-```
-
-**Opción B: Desde Render Shell (después del deploy)**
+**Aplicar migraciones**
 
 1. Ve a tu servicio en Render
 2. Click en **"Shell"** en el menú lateral
@@ -392,34 +342,14 @@ src/modules/{module}/
 └── {module}.service.ts # Business logic
 ```
 
-## 🌐 Configuración con Turso
+## 🌐 Configuración con PostgreSQL
 
-### Ventajas de Turso
+### Notas y buenas prácticas
 
-- **Edge Computing**: Base de datos distribuida globalmente
-- **SQLite Compatible**: Misma sintaxis que SQLite local
-- **Serverless**: Optimizado para funciones serverless
-- **Gratuito**: Plan gratuito generoso
-- **Rápido**: Latencia ultra-baja
-
-### Comandos útiles de Turso
-
-```bash
-# Ver todas las bases de datos
-turso db list
-
-# Ver información de una base de datos
-turso db show optic-management
-
-# Crear una réplica local
-turso db shell optic-management
-
-# Ver logs de la base de datos
-turso db logs optic-management
-
-# Eliminar base de datos
-turso db destroy optic-management
-```
+- Usa roles de solo lectura/escritura según necesidad.
+- Habilita conexiones TLS si tu proveedor lo soporta.
+- Configura `connection_limit` en Render para evitar agotamiento de conexiones; considera un pooler (p. ej., PgBouncer) si tu tráfico es alto.
+- Ajusta `prisma` para producción: usa `prisma:migrate:deploy` en lugar de `prisma migrate dev`.
 
 ## 🔧 Scripts Disponibles
 
@@ -463,8 +393,8 @@ echo $DATABASE_URL
 # Regenerar cliente Prisma
 pnpm prisma:generate
 
-# Verificar conexión con Turso
-turso db shell optic-management-db
+# Verificar acceso a PostgreSQL (ejemplo con psql)
+# psql "postgresql://USER:PASSWORD@HOST:PORT/DB_NAME"
 ```
 
 **Error en Render deployment:**

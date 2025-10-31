@@ -1,24 +1,38 @@
 import { execSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { unlinkSync } from 'node:fs';
+import { PrismaClient } from '@prisma/client';
 
 /**
- * Custom Vitest environment for Prisma SQLite testing
- * Creates a unique database file for each test suite and cleans up after
+ * Entorno de Vitest para Prisma con PostgreSQL
+ * Crea un schema único por suite y limpia al finalizar.
  */
 export default {
   name: 'prisma',
   transformMode: 'ssr',
   async setup() {
-    // Generate a unique database name for this test suite
-    const schema = randomUUID();
-    const databaseUrl = `file:/tmp/test-${schema}.db`;
+    const baseUrl = process.env.DATABASE_URL;
+    if (!baseUrl) {
+      throw new Error('Please provide a DATABASE_URL environment variable.');
+    }
 
-    // Set the DATABASE_URL environment variable for this test
+    const schema = randomUUID();
+    const url = new URL(baseUrl);
+    url.searchParams.set('schema', schema);
+    const databaseUrl = url.toString();
+
+    // Establecer DATABASE_URL para esta suite
     process.env.DATABASE_URL = databaseUrl;
 
-    // Run Prisma migrations to set up the test database
+    // Crear el schema explícitamente antes de migrar (idempotente)
+    const bootstrapPrisma = new PrismaClient({
+      datasources: { db: { url: databaseUrl } },
+    });
+    await bootstrapPrisma.$executeRawUnsafe(`CREATE SCHEMA IF NOT EXISTS "${schema}"`);
+    await bootstrapPrisma.$disconnect();
+
+    // Ejecutar migraciones contra el schema aislado
     execSync('npx prisma migrate deploy', {
+      stdio: 'inherit',
       env: {
         ...process.env,
         DATABASE_URL: databaseUrl,
@@ -27,19 +41,14 @@ export default {
 
     return {
       async teardown() {
-        // Remove the SQLite database file
+        // Eliminar el schema de pruebas
+        const client = new PrismaClient({
+          datasources: { db: { url: databaseUrl } },
+        });
         try {
-          const dbPath = `/tmp/test-${schema}.db`;
-          unlinkSync(dbPath);
-
-          // Also remove journal files if they exist
-          try {
-            unlinkSync(`${dbPath}-journal`);
-          } catch {
-            // Journal file might not exist, ignore
-          }
-        } catch (error) {
-          console.error('Failed to clean up test database:', error);
+          await client.$executeRawUnsafe(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
+        } finally {
+          await client.$disconnect();
         }
       },
     };

@@ -7,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -40,17 +40,17 @@ model User {
 }
 
 model PrescriptionRange {
-  id          String   @id @default(uuid())
-  code        String   @unique
+  id          String @id @default(uuid())
+  code        String @unique
   description String
 
   // Ojo con MENOR complejidad (4/2 en código "42-44")
-  minEyeMaxSphere    Float
-  minEyeMaxCylinder  Float
+  minEyeMaxSphere   Float
+  minEyeMaxCylinder Float
 
   // Ojo con MAYOR complejidad (4/4 en código "42-44")
-  maxEyeMaxSphere    Float
-  maxEyeMaxCylinder  Float
+  maxEyeMaxSphere   Float
+  maxEyeMaxCylinder Float
 
   products LensProduct[]
 
@@ -61,9 +61,9 @@ model PrescriptionRange {
 }
 
 model LensProduct {
-  id      String  @id @default(uuid())
-  sku     String  @unique
-  name    String
+  id   String @id @default(uuid())
+  sku  String @unique
+  name String
 
   material  LensMaterial
   tipo      LensType
