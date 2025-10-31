@@ -120,6 +120,7 @@ playwright/.cache/
 
 # Prisma
 .env.test
+.env
 
 # Docker
 .dockerignore
@@ -139,3 +140,4 @@ ecosystem.config.js
 .sentryclirc
 
 /src/generated/prisma
+
