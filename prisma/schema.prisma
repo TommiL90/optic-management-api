@@ -1,0 +1,97 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum LensMaterial {
+  organico
+  policarbonato
+  mineral
+  adelgazado
+}
+
+enum LensType {
+  monofocal
+  bifocal
+  multifocal
+}
+
+enum FrameType {
+  cerrado
+  semicerrado
+  al_aire
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PrescriptionRange {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  description String
+
+  // Ojo con MENOR complejidad (4/2 en código "42-44")
+  minEyeMaxSphere    Float
+  minEyeMaxCylinder  Float
+
+  // Ojo con MAYOR complejidad (4/4 en código "42-44")
+  maxEyeMaxSphere    Float
+  maxEyeMaxCylinder  Float
+
+  products LensProduct[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([minEyeMaxSphere, minEyeMaxCylinder, maxEyeMaxSphere, maxEyeMaxCylinder])
+}
+
+model LensProduct {
+  id      String  @id @default(uuid())
+  sku     String  @unique
+  name    String
+
+  material  LensMaterial
+  tipo      LensType
+  frameType FrameType
+
+  hasAntiReflective Boolean @default(false)
+  hasBlueFilter     Boolean @default(false)
+  isPhotochromic    Boolean @default(false)
+  hasUVProtection   Boolean @default(false)
+  isPolarized       Boolean @default(false)
+  isMirrored        Boolean @default(false)
+
+  costPrice  Int?
+  basePrice  Int
+  finalPrice Int
+
+  deliveryDays Int
+  observations String?
+  available    Boolean @default(true)
+
+  prescriptionRangeId String
+  prescriptionRange   PrescriptionRange @relation(fields: [prescriptionRangeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([prescriptionRangeId])
+  @@index([material])
+  @@index([frameType])
+  @@index([available])
+}

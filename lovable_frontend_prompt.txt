@@ -1,0 +1,137 @@
+
+# Prompt para Creación de Frontend con React, shadcn/ui y Tanstack Table
+
+## 1. Objetivo General
+
+Crear una aplicación web de una sola página (SPA) con React para la gestión y cotización de lentes oftalmológicos. La aplicación debe servir a dos propósitos principales:
+
+1.  **Cotizador de Lentes:** Permitir a los vendedores ingresar una receta y ver una lista de lentes compatibles.
+2.  **Gestión de Lentes:** Proveer una interfaz CRUD (Crear, Leer, Actualizar, Eliminar) para administrar el catálogo de productos de lentes.
+
+La interfaz debe ser moderna, limpia y profesional, utilizando **shadcn/ui** para todos los componentes y **Tailwind CSS** para el estilizado.
+
+## 2. Stack Tecnológico Principal
+
+- **Framework:** React (con Vite y TypeScript)
+- **UI Kit:** shadcn/ui
+- **Formularios:** React Hook Form con Zod para validación (`@hookform/resolvers/zod`)
+- **Tablas de Datos:** Tanstack Table v8
+- **Estado de API:** Tanstack Query v5 (React Query)
+- **Navegación:** React Router DOM
+
+## 3. Diseño y Layout General
+
+- **Layout Principal:** La aplicación debe tener una barra de navegación lateral (Sidebar) persistente a la izquierda.
+- **Contenido Principal:** El área de contenido a la derecha del sidebar mostrará la página activa.
+- **Navegación:** El sidebar debe contener los siguientes enlaces de navegación:
+    1.  **Cotizador de Lentes:** La página para cotizar lentes a clientes.
+    2.  **Gestión de Lentes:** La página para el CRUD de productos de lentes.
+
+## 4. Funcionalidad #1: Página de Cotización de Lentes
+
+Esta vista permite a los vendedores generar cotizaciones rápidamente.
+
+### 4.1. Formulario de Prescripción y Filtros
+
+- **Librerías:** Usar **React Hook Form** y **Zod**.
+- **Componentes:** Utilizar **shadcn/ui** (`Card`, `Input`, `Select`, `Checkbox`, `Button`).
+- **Estructura:**
+    - **Sección de Prescripción:** Dos subsecciones, "Ojo Derecho (OD)" y "Ojo Izquierdo (OI)", cada una con campos `Input` numéricos para "Esfera" y "Cilindro" (`step="0.25"`).
+    - **Sección de Filtros:**
+        - **Tipo de Armazón (Requerido):** `Select` o `RadioGroup` ("Cerrado", "Semicerrado", "Al Aire").
+        - **Filtros Opcionales:** `Select` para "Material" y "Tipo de Lente", y `Checkbox` para características booleanas (Antirreflejo, Filtro Azul, etc.).
+    - **Botón de Acción:** `Button` "Cotizar Lentes" con estado de carga.
+
+### 4.2. Sección de Resultados
+
+- **Librería:** Usar **Tanstack Table** con componentes de tabla de **shadcn/ui**.
+- **Estructura:**
+    - **Meta Información:** Un `Card` o `Alert` mostrando el rango de prescripción usado y el total de resultados.
+    - **Tabla de Productos:**
+        - **Columnas:** Nombre, SKU, Material, Características (con `Badge`), Precio Final, Días de Entrega, Observaciones.
+        - **Ordenamiento:** Ordenable por precio por defecto.
+    - **Manejo de Estados:** Mostrar mensajes claros para el estado inicial, sin resultados o errores de API.
+
+### 4.3. Integración con API (Cotización)
+
+- **Endpoint:** `POST /api/lenses/quote`.
+- **Hook:** Usar `useMutation` de Tanstack Query para manejar el envío del formulario.
+- **Payload:** El cuerpo de la solicitud debe coincidir con la estructura definida en la historia de usuario.
+
+## 5. Funcionalidad #2: Página de Gestión de Lentes (CRUD)
+
+Esta vista permite a los administradores gestionar el catálogo completo de lentes.
+
+### 5.1. Tabla de Productos de Lentes
+
+- **Librería:** Usar **Tanstack Table** con componentes de tabla de **shadcn/ui**.
+- **Punto de Partida:** La tabla debe mostrar todos los productos obtenidos del endpoint `GET /api/lenses/products`.
+- **Componentes:** Incluir un botón principal "Agregar Nuevo Lente" encima de la tabla.
+- **Columnas de la Tabla:**
+    - `SKU`
+    - `Nombre`
+    - `Material`
+    - `Tipo`
+    - `Precio Final` (formateado como moneda)
+    - `Rango de Prescripción`: Mostrar el `code` del rango asociado (ej: "42-42").
+    - `Disponible`: Un `Badge` o ícono para indicar el estado de disponibilidad.
+    - `Acciones`: Una columna al final con dos botones por fila:
+        - **Editar:** Un `Button` (variante `outline` o `ghost`) con un ícono de lápiz.
+        - **Eliminar:** Un `Button` (variante `destructive`) con un ícono de basura.
+- **Funcionalidades de la Tabla:**
+    - **Filtros:** Agregar filtros de `Input` en la parte superior de la tabla para buscar por nombre o SKU.
+    - **Paginación:** Implementar paginación en el pie de la tabla.
+
+### 5.2. Formulario de Creación y Edición de Lentes
+
+- **Modal o Drawer:** Al hacer clic en "Agregar Nuevo Lente" o "Editar", se debe abrir un `Dialog` (modal) o `Drawer` (panel lateral) de **shadcn/ui** con el formulario.
+- **Librerías:** Usar **React Hook Form** y **Zod** para la validación.
+- **Campos del Formulario (deben corresponder al schema `CreateLensProduct` y `UpdateLensProduct`):
+    - `sku`: `Input` de texto.
+    - `name`: `Input` de texto.
+    - `material`, `tipo`, `frameType`: Componentes `Select`.
+    - `hasAntiReflective`, `hasBlueFilter`, etc.: Componentes `Checkbox`.
+    - `costPrice`, `basePrice`, `finalPrice`: `Input` de tipo `number`.
+    - `deliveryDays`: `Input` de tipo `number`.
+    - `observations`: `Textarea`.
+    - `available`: `Checkbox` o `Switch`.
+    - **`prescriptionRangeId` (Campo Clave):**
+        - Un `Select` de shadcn.
+        - Las opciones de este `Select` deben cargarse dinámicamente haciendo una llamada al endpoint `GET /api/prescription-ranges`.
+        - Cada opción debe mostrar el `code` o `description` del rango y tener como valor el `id` del rango.
+- **Lógica del Formulario:**
+    - **Creación:** El formulario empieza vacío. Al enviar, llama al `POST /api/lenses/products`.
+    - **Edición:** El formulario se precarga con los datos del producto seleccionado (obtenidos de `GET /api/lenses/products/:id`). Al enviar, llama al `PUT /api/lenses/products/:id`.
+
+### 5.3. Lógica de Eliminación
+
+- Al hacer clic en el botón "Eliminar", mostrar un `AlertDialog` de **shadcn/ui** para confirmar la acción.
+- Si el usuario confirma, realizar la llamada al endpoint `DELETE /api/lenses/products/:id`.
+- Tras una creación, actualización o eliminación exitosa, la tabla principal debe refrescar sus datos (Tanstack Query puede invalidar la query de `GET /api/lenses/products` para lograr esto automáticamente).
+
+## 6. Estructura de Archivos (Sugerida)
+
+```
+src/
+├── components/
+│   └── ui/         # Componentes de shadcn/ui
+│   └── layout/
+│       ├── Sidebar.tsx
+│       └── MainLayout.tsx
+├── features/
+│   ├── lenses/     # Feature compartida
+│   │   ├── api/      # Hooks de API (useGetLenses, useCreateLens, etc.)
+│   │   ├── schemas/  # Schemas de Zod
+│   │   └── types/    # Tipos inferidos
+│   ├── lens-quoting/ # Feature específica de cotización
+│   │   ├── components/
+│   │   └── LensQuotePage.tsx
+│   └── lens-management/ # Feature específica de CRUD
+│       ├── components/
+│       │   ├── LensTable.tsx
+│       │   ├── LensForm.tsx
+│       │   └── columns.tsx
+│       └── LensManagementPage.tsx
+├── pages/ # Archivos de enrutamiento
+└── App.tsx
+```
