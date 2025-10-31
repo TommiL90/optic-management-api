@@ -1,5 +1,5 @@
 import { prisma } from '@/core/database/prisma.client.ts'
-import type { ILensesRepository } from '@/modules/lenses/repositories/lenses.repository.interface.ts'
+import type { ILensesRepository, LensProductWithRange } from '@/modules/lenses/repositories/lenses.repository.interface.ts'
 import type {
 	Filters,
 	LensProductData,
@@ -87,7 +87,9 @@ export class PrismaLensesRepository implements ILensesRepository {
 	 * @param includeRelations - Whether to include prescriptionRange relation
 	 * @returns Promise with array of lens products
 	 */
-	async findAll(includeRelations = false): Promise<LensProductData[]> {
+	async findAll(includeRelations: true): Promise<LensProductWithRange[]>
+	async findAll(includeRelations?: false): Promise<LensProductData[]>
+	async findAll(includeRelations = false): Promise<LensProductData[] | LensProductWithRange[]> {
 		return await prisma.lensProduct.findMany({
 			orderBy: { createdAt: 'desc' },
 			...(includeRelations && { include: { prescriptionRange: true } }),

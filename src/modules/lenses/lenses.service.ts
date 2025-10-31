@@ -2,8 +2,7 @@ import { PrescriptionRangeNotFoundException, NotFoundException, ConflictExceptio
 import { Logger } from '@/core/utils/logger.util.ts'
 import type { ILensesRepository } from '@/modules/lenses/repositories/lenses.repository.interface.ts'
 import {
-	lensProductResponseSchema,
-	type LensProductData,
+	transformLensProductToResponse,
 	type LensProductResponse,
 	type Prescription,
 	type QuoteLensesRequest,
@@ -74,43 +73,6 @@ export class LensesService {
 	}
 
 	/**
-	 * Maps lens product data to response format using Zod schema
-	 * @param product - Lens product data from repository
-	 * @returns Lens product response DTO
-	 */
-	private mapLensProductToResponse(product: LensProductData): LensProductResponse {
-		const mapped = {
-			id: product.id,
-			sku: product.sku,
-			name: product.name,
-			material: product.material,
-			tipo: product.tipo,
-			frameType: product.frameType,
-			features: {
-				hasAntiReflective: product.hasAntiReflective,
-				hasBlueFilter: product.hasBlueFilter,
-				isPhotochromic: product.isPhotochromic,
-				hasUVProtection: product.hasUVProtection,
-				isPolarized: product.isPolarized,
-				isMirrored: product.isMirrored,
-			},
-			pricing: {
-				basePrice: product.basePrice,
-				finalPrice: product.finalPrice,
-			},
-			deliveryDays: product.deliveryDays,
-			observations: product.observations,
-			available: product.available,
-			prescriptionRangeId: product.prescriptionRangeId,
-			createdAt: product.createdAt instanceof Date ? product.createdAt.toISOString() : product.createdAt,
-			updatedAt: product.updatedAt instanceof Date ? product.updatedAt.toISOString() : product.updatedAt,
-		}
-
-		// Validate with Zod schema to ensure type safety
-		return lensProductResponseSchema.parse(mapped)
-	}
-
-	/**
 	 * Quotes lenses based on prescription and filters
 	 * @param request - Quote request with prescription and filters
 	 * @returns Quote response with available products
@@ -135,7 +97,7 @@ export class LensesService {
 		}
 
 		const products = await this.lensesRepository.findProductsByRange(range.id, request.filters)
-		const results = products.map((product) => this.mapLensProductToResponse(product))
+		const results = products.map((product) => transformLensProductToResponse(product))
 
 		return {
 			results,
@@ -175,7 +137,7 @@ export class LensesService {
 			}
 
 			const rawProduct = await this.lensesRepository.create(payload)
-			const product = this.mapLensProductToResponse(rawProduct)
+			const product = transformLensProductToResponse(rawProduct)
 
 			Logger.businessLogic('LensesService: createLensProduct completed', {
 				operation: 'createLensProduct',
@@ -209,7 +171,7 @@ export class LensesService {
 				throw new NotFoundException('Lens Product', id)
 			}
 
-			const product = this.mapLensProductToResponse(rawProduct)
+			const product = transformLensProductToResponse(rawProduct)
 
 			Logger.businessLogic('LensesService: findLensProductById completed', {
 				operation: 'findLensProductById',
@@ -237,7 +199,7 @@ export class LensesService {
 
 		try {
 			const rawProducts = await this.lensesRepository.findAll(true) // Include prescriptionRange
-			const products = rawProducts.map(p => this.mapLensProductToResponse(p))
+			const products = rawProducts.map(p => transformLensProductToResponse(p))
 
 			const result: LensProductsResponse = {
 				products,
@@ -287,7 +249,7 @@ export class LensesService {
 			}
 
 			const rawUpdatedProduct = await this.lensesRepository.update(id, updateData)
-			const updatedProduct = this.mapLensProductToResponse(rawUpdatedProduct)
+			const updatedProduct = transformLensProductToResponse(rawUpdatedProduct)
 
 			Logger.businessLogic('LensesService: updateLensProduct completed', {
 				operation: 'updateLensProduct',

@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client'
 import type {
 	Filters,
 	LensProductData,
@@ -5,6 +6,11 @@ import type {
 	CreateLensProduct,
 	UpdateLensProduct,
 } from '@/modules/lenses/schemas/lenses.schemas.ts'
+
+// Prisma types for lens products with/without relations
+export type LensProductWithRange = Prisma.LensProductGetPayload<{
+	include: { prescriptionRange: true }
+}>
 
 /**
  * Lenses Repository Interface
@@ -67,7 +73,9 @@ export interface ILensesRepository {
 	 * @param includeRelations - Whether to include prescriptionRange relation
 	 * @returns Promise with array of lens products (raw data, possibly with relations)
 	 */
-	findAll(includeRelations?: boolean): Promise<LensProductData[]>
+	findAll(includeRelations: true): Promise<LensProductWithRange[]>
+	findAll(includeRelations?: false): Promise<LensProductData[]>
+	findAll(includeRelations?: boolean): Promise<LensProductData[] | LensProductWithRange[]>
 
 	/**
 	 * Update lens product

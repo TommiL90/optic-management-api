@@ -112,40 +112,81 @@ export type Filters = z.infer<typeof filtersSchema>
 export type LensProductResponse = z.infer<typeof lensProductResponseSchema>
 export type QuoteLensesResponse = z.infer<typeof quoteLensesResponseSchema>
 
-export interface PrescriptionRangeData {
-	id: string
-	code: string
-	description: string
-	minEyeMaxSphere: number
-	minEyeMaxCylinder: number
-	maxEyeMaxSphere: number
-	maxEyeMaxCylinder: number
-	createdAt: Date
-	updatedAt: Date
-}
+// Input schemas for transforming Prisma data to API responses
+const prismaDateSchema = z.union([z.date(), z.string().datetime()]).transform((val) =>
+	val instanceof Date ? val.toISOString() : val
+)
 
-export interface LensProductData {
-	id: string
-	sku: string
-	name: string
-	material: typeof LENS_MATERIALS[number]
-	tipo: typeof LENS_TYPES[number]
-	frameType: typeof FRAME_TYPES[number]
-	hasAntiReflective: boolean
-	hasBlueFilter: boolean
-	isPhotochromic: boolean
-	hasUVProtection: boolean
-	isPolarized: boolean
-	isMirrored: boolean
-	costPrice: number | null
-	basePrice: number
-	finalPrice: number
-	deliveryDays: number
-	observations: string | null
-	available: boolean
-	prescriptionRangeId: string
-	createdAt: Date
-	updatedAt: Date
+const prismaPrescriptionRangeSchema = z.object({
+	id: z.string().uuid(),
+	code: z.string(),
+	description: z.string(),
+	minEyeMaxSphere: z.number(),
+	minEyeMaxCylinder: z.number(),
+	maxEyeMaxSphere: z.number(),
+	maxEyeMaxCylinder: z.number(),
+	createdAt: prismaDateSchema,
+	updatedAt: prismaDateSchema,
+})
+
+const prismaLensProductSchema = z.object({
+	id: z.string().uuid(),
+	sku: z.string(),
+	name: z.string(),
+	material: z.enum(LENS_MATERIALS),
+	tipo: z.enum(LENS_TYPES),
+	frameType: z.enum(FRAME_TYPES),
+	hasAntiReflective: z.boolean(),
+	hasBlueFilter: z.boolean(),
+	isPhotochromic: z.boolean(),
+	hasUVProtection: z.boolean(),
+	isPolarized: z.boolean(),
+	isMirrored: z.boolean(),
+	costPrice: z.number().nullable().optional(),
+	basePrice: z.number(),
+	finalPrice: z.number(),
+	deliveryDays: z.number(),
+	observations: z.string().nullable(),
+	available: z.boolean(),
+	prescriptionRangeId: z.string().uuid(),
+	createdAt: prismaDateSchema,
+	updatedAt: prismaDateSchema,
+	prescriptionRange: prismaPrescriptionRangeSchema.optional(),
+}).transform((data) => ({
+	id: data.id,
+	sku: data.sku,
+	name: data.name,
+	material: data.material,
+	tipo: data.tipo,
+	frameType: data.frameType,
+	features: {
+		hasAntiReflective: data.hasAntiReflective,
+		hasBlueFilter: data.hasBlueFilter,
+		isPhotochromic: data.isPhotochromic,
+		hasUVProtection: data.hasUVProtection,
+		isPolarized: data.isPolarized,
+		isMirrored: data.isMirrored,
+	},
+	pricing: {
+		basePrice: data.basePrice,
+		finalPrice: data.finalPrice,
+	},
+	deliveryDays: data.deliveryDays,
+	observations: data.observations,
+	available: data.available,
+	prescriptionRangeId: data.prescriptionRangeId,
+	createdAt: data.createdAt,
+	updatedAt: data.updatedAt,
+	...(data.prescriptionRange && { prescriptionRange: data.prescriptionRange }),
+}))
+
+// Type exports for Prisma data (used by repositories)
+export type PrescriptionRangeData = z.input<typeof prismaPrescriptionRangeSchema>
+export type LensProductData = z.input<typeof prismaLensProductSchema>
+
+// Transform function to convert Prisma data to API response
+export const transformLensProductToResponse = (product: LensProductData): LensProductWithRangeResponse => {
+	return prismaLensProductSchema.parse(product)
 }
 
 // CRUD Schemas
@@ -198,7 +239,7 @@ export const lensProductIdParamSchema = z.object({
 // Response schemas
 
 export const lensProductsResponseSchema = z.object({
-	products: z.array(lensProductResponseSchema).describe('Lista de productos de lentes'),
+	products: z.array(lensProductWithRangeResponseSchema).describe('Lista de productos de lentes'),
 })
 
 // Type exports

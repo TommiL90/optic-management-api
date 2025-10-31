@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import type { ILensesRepository } from '@/modules/lenses/repositories/lenses.repository.interface.ts'
+import type { ILensesRepository, LensProductWithRange } from '@/modules/lenses/repositories/lenses.repository.interface.ts'
 import type {
 	Filters,
 	LensProductData,
@@ -126,11 +126,29 @@ export class InMemoryLensesRepository implements ILensesRepository {
 
 	/**
 	 * Get all lens products (no pagination)
-	 * @param includeRelations - Not used in InMemory implementation
+	 * @param includeRelations - Whether to include prescriptionRange relation
 	 * @returns Promise with array of lens products
 	 */
-	async findAll(_includeRelations = false): Promise<LensProductData[]> {
-		return [...this.lensProducts].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+	async findAll(includeRelations: true): Promise<LensProductWithRange[]>
+	async findAll(includeRelations?: false): Promise<LensProductData[]>
+	async findAll(includeRelations = false): Promise<LensProductData[] | LensProductWithRange[]> {
+		const sortedProducts = [...this.lensProducts].sort((a, b) => {
+			const aTime = a.createdAt instanceof Date ? a.createdAt.getTime() : new Date(a.createdAt).getTime()
+			const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : new Date(b.createdAt).getTime()
+			return bTime - aTime
+		})
+
+		if (includeRelations) {
+			return sortedProducts.map(product => {
+				const prescriptionRange = this.prescriptionRanges.find(r => r.id === product.prescriptionRangeId)
+				return {
+					...product,
+					prescriptionRange: prescriptionRange ?? null,
+				} as LensProductWithRange
+			})
+		}
+
+		return sortedProducts
 	}
 
 	/**
