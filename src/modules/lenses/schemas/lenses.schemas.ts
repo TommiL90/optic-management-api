@@ -118,7 +118,7 @@ const prismaDateSchema = z.union([z.date(), z.string().datetime()]).transform((v
 )
 
 const prismaPrescriptionRangeSchema = z.object({
-	id: z.string().uuid(),
+	id: z.string(),
 	code: z.string(),
 	description: z.string(),
 	minEyeMaxSphere: z.number(),
@@ -130,7 +130,7 @@ const prismaPrescriptionRangeSchema = z.object({
 })
 
 const prismaLensProductSchema = z.object({
-	id: z.string().uuid(),
+	id: z.string(),
 	sku: z.string(),
 	name: z.string(),
 	material: z.enum(LENS_MATERIALS),
@@ -148,10 +148,10 @@ const prismaLensProductSchema = z.object({
 	deliveryDays: z.number(),
 	observations: z.string().nullable(),
 	available: z.boolean(),
-	prescriptionRangeId: z.string().uuid(),
+	prescriptionRangeId: z.string(),
 	createdAt: prismaDateSchema,
 	updatedAt: prismaDateSchema,
-	prescriptionRange: prismaPrescriptionRangeSchema.optional(),
+	prescriptionRange: prismaPrescriptionRangeSchema.nullable().optional(),
 }).transform((data) => ({
 	id: data.id,
 	sku: data.sku,
