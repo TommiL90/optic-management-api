@@ -62,6 +62,24 @@ app.register(fastifyCors, {
 
 app.register(fastifyMultipart);
 
+app.removeContentTypeParser('application/json');
+app.addContentTypeParser(
+  'application/json',
+  { parseAs: 'string' },
+  (request, body, done) => {
+    if (!body || body.trim() === '') {
+      return done(null, null);
+    }
+
+    try {
+      const parsed = JSON.parse(body);
+      return done(null, parsed);
+    } catch (error) {
+      return done(error as Error);
+    }
+  },
+);
+
 app.setSerializerCompiler(serializerCompiler);
 app.setValidatorCompiler(validatorCompiler);
 
