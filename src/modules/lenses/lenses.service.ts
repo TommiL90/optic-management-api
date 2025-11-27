@@ -96,7 +96,7 @@ export class LensesService {
 			throw new PrescriptionRangeNotFoundException(normalized)
 		}
 
-		const products = await this.lensesRepository.findProductsByRange(range.id, request.filters)
+		const products = await this.lensesRepository.findProductsByRange(range.id, request.filters ?? {})
 		const results = products.map((product) => transformLensProductToResponse(product))
 
 		return {
@@ -109,7 +109,7 @@ export class LensesService {
 					description: range.description,
 				},
 				totalResults: results.length,
-				filtersApplied: request.filters,
+				filtersApplied: request.filters ?? {},
 			},
 		}
 	}

@@ -433,7 +433,7 @@ describe('Quote Lenses (E2E)', () => {
       expect(body.error.message.toLowerCase()).toContain('no se encontró una tabla de precios')
     })
 
-    it('should return 400 with missing frameType', async () => {
+    it('should return 200 with missing frameType', async () => {
       // Given
       const requestBody = {
         prescription: {
@@ -451,7 +451,27 @@ describe('Quote Lenses (E2E)', () => {
       })
 
       // Then
-      expect(response.statusCode).toBe(400)
+      expect(response.statusCode).toBe(200)
+    })
+
+    it('should return 200 with missing filters object', async () => {
+      // Given
+      const requestBody = {
+        prescription: {
+          od: { sphere: -3.75, cylinder: -1.50 },
+          oi: { sphere: -4.00, cylinder: -2.00 },
+        },
+      }
+
+      // When
+      const response = await app.inject({
+        method: 'POST',
+        url: '/lenses/quote',
+        payload: requestBody,
+      })
+
+      // Then
+      expect(response.statusCode).toBe(200)
     })
 
     it('should return 400 with invalid prescription values', async () => {

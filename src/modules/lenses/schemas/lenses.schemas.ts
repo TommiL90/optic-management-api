@@ -16,7 +16,7 @@ const prescriptionSchema = z.object({
 })
 
 const filtersSchema = z.object({
-	frameType: z.enum(FRAME_TYPES).describe('Tipo de marco (obligatorio)'),
+	frameType: z.enum(FRAME_TYPES).optional().describe('Tipo de marco'),
 	material: z
 		.enum(LENS_MATERIALS)
 		.optional()
@@ -34,7 +34,7 @@ const filtersSchema = z.object({
 export const quoteLensesSchema = {
 	body: z.object({
 		prescription: prescriptionSchema,
-		filters: filtersSchema,
+		filters: filtersSchema.optional(),
 	}),
 }
 
