@@ -139,3 +139,6 @@ ecosystem.config.js
 
 /src/generated/prisma
 
+.env.production
+.env.test
+.env
