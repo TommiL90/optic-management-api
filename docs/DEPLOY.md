@@ -32,7 +32,7 @@ Asegurar que los siguientes archivos existen en la raíz del repositorio:
 /Dockerfile                 # Multi-stage build con Node.js 24 Alpine
 /docker-compose.prod.yml    # Orquestación de servicios con límites de recursos (PRODUCCIÓN)
 /.dockerignore              # Optimización de contexto de build
-/docker-entrypoint.sh       # Inicialización automática (migrations + seed)
+/docker-entrypoint.sh       # Inicialización automática (migrations)
 /.env.production            # Plantilla de variables de entorno
 
 # NOTA: docker-compose.yml es para tests E2E locales, NO para Dokploy
@@ -121,7 +121,7 @@ API_PORT=3000
    ├─ Build de imagen Docker              (~3-5 min)
    ├─ Pull de PostgreSQL Alpine           (~1 min)
    ├─ Inicio de servicios                 (~30s)
-   ├─ Migrations + Seed                   (~30s)
+   ├─ Migrations automáticas              (~30s)
    ├─ Health checks (API + DB)            (~20s)
    └─ Traefik routing configurado         (~10s)
    ```
@@ -133,11 +133,11 @@ API_PORT=3000
    ✅ PostgreSQL is ready!
    📦 Running database migrations...
    ✅ Migrations applied successfully!
-   🌱 Running database seed...
-   ✅ Seed completed successfully!
    🎉 Initialization complete! Starting application...
    🚀 Server running at http://0.0.0.0:3000
    ```
+   
+   **NOTA**: El seed no se ejecuta automáticamente. Si necesitas ejecutarlo, hazlo manualmente.
 
 ### 4. Verificación
 
@@ -317,20 +317,15 @@ Error: P1001: Can't reach database server
    - Host debe ser `db` (nombre del servicio en docker-compose)
    - User/Password deben coincidir con `POSTGRES_USER` y `POSTGRES_PASSWORD`
 
-### Problema: Seed falla
+### Problema: Seed necesario
 
-**Error en logs**:
-```
-⚠️ Seed failed, but continuing (data may already exist)
-```
+**Nota**: El seed ya no se ejecuta automáticamente. Si necesitas ejecutarlo:
 
 **Solución**:
-- Esto es **NORMAL** en re-deploys (datos ya existen)
-- El seed usa `upsert`, por lo que es idempotente
-- Si es el primer deploy y falla, verificar:
-  ```bash
-  docker exec optic-api pnpm prisma:seed
-  ```
+```bash
+# Ejecutar seed manualmente
+docker exec optic-api pnpm prisma:seed
+```
 
 ### Problema: API no arranca
 

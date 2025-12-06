@@ -31,7 +31,7 @@ wait_for_postgres() {
 run_migrations() {
   echo "📦 Running database migrations..."
 
-  if npx prisma migrate deploy; then
+  if pnpm prisma:migrate:deploy; then
     echo "✅ Migrations applied successfully!"
   else
     echo "❌ Migration failed!"
@@ -39,25 +39,14 @@ run_migrations() {
   fi
 }
 
-# Función para ejecutar seed (idempotente con upsert)
-run_seed() {
-  echo "🌱 Running database seed..."
-
-  if npx prisma db seed; then
-    echo "✅ Seed completed successfully!"
-  else
-    echo "⚠️  Seed failed, but continuing (data may already exist)"
-  fi
-}
-
 # Ejecutar pasos de inicialización
 # NOTA: postgresql-client ya está instalado en el Dockerfile
 wait_for_postgres
 run_migrations
-run_seed
 
 echo "🎉 Initialization complete! Starting application..."
 echo ""
 
 # Ejecutar comando principal (pasado como argumentos)
 exec "$@"
+

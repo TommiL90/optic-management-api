@@ -10,7 +10,7 @@ Este proyecto tiene **3 configuraciones de Docker** para diferentes entornos:
 /docker-compose.prod.yml      # Producción completa (API + PostgreSQL, para Dokploy)
 /docker-compose.dev.yml       # (Opcional) Desarrollo local completo
 /.dockerignore                # Optimización de build context
-/docker-entrypoint.sh         # Script de inicialización (migrations + seed)
+/docker-entrypoint.sh         # Script de inicialización (migrations automáticas)
 ```
 
 ## Uso por Entorno

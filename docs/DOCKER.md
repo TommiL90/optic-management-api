@@ -10,7 +10,7 @@ Este proyecto incluye configuración completa para deployment en producción opt
 /Dockerfile              # Multi-stage build con Node.js 24 Alpine
 /docker-compose.yml      # Orquestación con límites de recursos
 /.dockerignore           # Optimización de build context
-/docker-entrypoint.sh    # Inicialización (migrations + seed)
+/docker-entrypoint.sh    # Inicialización (migrations automáticas)
 /.env.production         # Plantilla de variables de entorno
 ```
 
@@ -278,7 +278,7 @@ docker logs optic-db | grep "ready to accept connections"
 - **Deployment Guide**: Ver `docs/DEPLOY.md` para guía completa de Dokploy
 - **Dockerfile**: Multi-stage build con Node.js 24 Alpine
 - **docker-compose.yml**: Configuración de servicios con límites
-- **docker-entrypoint.sh**: Script de inicialización
+- **docker-entrypoint.sh**: Script de inicialización (migrations automáticas)
 
 ## Arquitectura
 
