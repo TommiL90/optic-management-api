@@ -40,8 +40,8 @@ FROM node:24-alpine AS production
 LABEL maintainer="optic-management-api"
 LABEL description="Production runtime for optic-management-api"
 
-# Instalar dependencias del sistema (postgresql-client para pg_isready)
-RUN apk add --no-cache postgresql-client
+# Instalar dependencias del sistema (postgresql-client para pg_isready, curl para seed endpoint)
+RUN apk add --no-cache postgresql-client curl
 
 # Instalar pnpm
 RUN corepack enable && corepack prepare pnpm@10.18.0 --activate
@@ -73,7 +73,7 @@ COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
 # Copiar script de entrypoint y hacerlo ejecutable
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh && \
-    chown nodejs:nodejs /usr/local/bin/docker-entrypoint.sh
+  chown nodejs:nodejs /usr/local/bin/docker-entrypoint.sh
 
 # Cambiar ownership a usuario no-root
 RUN chown -R nodejs:nodejs /app
