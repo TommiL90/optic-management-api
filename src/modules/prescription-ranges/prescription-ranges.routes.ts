@@ -1,6 +1,13 @@
 import type { FastifyInstance } from 'fastify'
-import { getAllPrescriptionRangesHandler } from '@/modules/prescription-ranges/prescription-ranges.handlers.ts'
-import { prescriptionRangesResponseSchema } from '@/modules/prescription-ranges/schemas/prescription-ranges.schemas.ts'
+import {
+	getAllPrescriptionRangesHandler,
+	seedPrescriptionRangesHandler,
+} from '@/modules/prescription-ranges/prescription-ranges.handlers.ts'
+import {
+	prescriptionRangesResponseSchema,
+	seedPrescriptionRangesSchema,
+	seedPrescriptionRangesResponseSchema,
+} from '@/modules/prescription-ranges/schemas/prescription-ranges.schemas.ts'
 
 /**
  * Prescription Ranges Routes
@@ -23,5 +30,24 @@ export async function prescriptionRangesRoutes(app: FastifyInstance) {
 			},
 		},
 		getAllPrescriptionRangesHandler,
+	)
+
+	/**
+	 * POST /prescription-ranges/seed
+	 * Seed prescription ranges (upsert by code)
+	 */
+	app.post(
+		'/prescription-ranges/seed',
+		{
+			schema: {
+				description: 'Hacer seed de rangos de prescripción (crea o actualiza por código)',
+				tags: ['Prescription Ranges'],
+				body: seedPrescriptionRangesSchema,
+				response: {
+					200: seedPrescriptionRangesResponseSchema,
+				},
+			},
+		},
+		seedPrescriptionRangesHandler,
 	)
 }

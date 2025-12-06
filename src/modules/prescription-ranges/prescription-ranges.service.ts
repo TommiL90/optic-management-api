@@ -1,6 +1,10 @@
 import { Logger } from '@/core/utils/logger.util.ts'
 import type { IPrescriptionRangesRepository } from '@/modules/prescription-ranges/repositories/prescription-ranges.repository.interface.ts'
-import type { PrescriptionRangesResponse } from '@/modules/prescription-ranges/schemas/prescription-ranges.schemas.ts'
+import type {
+	PrescriptionRangesResponse,
+	SeedPrescriptionRangesResponse,
+	PrescriptionRangeInput,
+} from '@/modules/prescription-ranges/schemas/prescription-ranges.schemas.ts'
 
 /**
  * Prescription Ranges Service
@@ -52,6 +56,40 @@ export class PrescriptionRangesService {
 		} catch (error) {
 			Logger.error('PrescriptionRangesService: findAllRanges failed', {
 				operation: 'findAllRanges',
+				error: error instanceof Error ? error.message : String(error),
+			})
+			throw error
+		}
+	}
+
+	/**
+	 * Seed prescription ranges
+	 * @param ranges - Array of prescription range data to seed
+	 * @returns Promise with seed response
+	 */
+	async seedRanges(ranges: PrescriptionRangeInput[]): Promise<SeedPrescriptionRangesResponse> {
+		Logger.businessLogic('PrescriptionRangesService: seedRanges started', {
+			operation: 'seedRanges',
+			count: ranges.length,
+		})
+
+		try {
+			const { created, updated } = await this.prescriptionRangesRepository.seedRanges(ranges)
+
+			Logger.businessLogic('PrescriptionRangesService: seedRanges completed', {
+				operation: 'seedRanges',
+				result: { created, updated, total: ranges.length },
+			})
+
+			return {
+				message: `Seed completado: ${created} creados, ${updated} actualizados`,
+				created,
+				updated,
+				total: ranges.length,
+			}
+		} catch (error) {
+			Logger.error('PrescriptionRangesService: seedRanges failed', {
+				operation: 'seedRanges',
 				error: error instanceof Error ? error.message : String(error),
 			})
 			throw error
