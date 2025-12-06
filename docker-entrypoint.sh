@@ -31,8 +31,14 @@ wait_for_postgres() {
 run_migrations() {
   echo "📦 Running database migrations..."
 
-  if pnpm prisma:migrate:deploy; then
+  # Reducir heap de Node.js temporalmente para migraciones (evitar OOM)
+  export NODE_OPTIONS="--max-old-space-size=64"
+
+  # Usar npx directamente para menos overhead que pnpm
+  if npx prisma migrate deploy; then
     echo "✅ Migrations applied successfully!"
+    # Restaurar heap normal (será sobrescrito por docker-compose.prod.yml después)
+    unset NODE_OPTIONS
   else
     echo "❌ Migration failed!"
     exit 1

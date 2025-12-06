@@ -78,15 +78,15 @@ services:
     container_name: optic-api
     restart: unless-stopped
 
-    # Límites de recursos CRÍTICOS (128MB max)
+    # Límites de recursos CRÍTICOS (180MB max para migraciones)
     deploy:
       resources:
         limits:
           cpus: '0.3'        # 30% de 1 core
-          memory: 128M       # Máximo absoluto
+          memory: 180M       # Máximo absoluto (aumentado para migraciones)
         reservations:
           cpus: '0.15'       # 15% reservado
-          memory: 100M       # 100MB reservados
+          memory: 120M       # 120MB reservados
 
     # Variables de entorno (desde .env)
     environment:
@@ -97,8 +97,8 @@ services:
       LOG_PRETTY: "false"
       DATABASE_URL: postgresql://${POSTGRES_USER:-optic_user}:${POSTGRES_PASSWORD:-change_me_in_production}@db:5432/${POSTGRES_DB:-optic_db}?schema=public&connection_limit=3&pool_timeout=20
 
-      # Limitar heap de Node.js (crítico para evitar OOM)
-      NODE_OPTIONS: "--max-old-space-size=96"
+      # Limitar heap de Node.js (reducido para evitar OOM durante migraciones)
+      NODE_OPTIONS: "--max-old-space-size=80"
 
     # Puertos (solo interno, Traefik expone externamente)
     ports:
