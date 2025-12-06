@@ -31,7 +31,7 @@ wait_for_postgres() {
 run_migrations() {
   echo "📦 Running database migrations..."
 
-  if pnpm prisma:migrate:deploy; then
+  if npx prisma migrate deploy; then
     echo "✅ Migrations applied successfully!"
   else
     echo "❌ Migration failed!"
@@ -43,20 +43,15 @@ run_migrations() {
 run_seed() {
   echo "🌱 Running database seed..."
 
-  if pnpm prisma:seed; then
+  if npx prisma db seed; then
     echo "✅ Seed completed successfully!"
   else
     echo "⚠️  Seed failed, but continuing (data may already exist)"
   fi
 }
 
-# Instalar postgresql-client para pg_isready (solo si no existe)
-if ! command -v pg_isready > /dev/null 2>&1; then
-  echo "📥 Installing postgresql-client..."
-  apk add --no-cache postgresql-client
-fi
-
 # Ejecutar pasos de inicialización
+# NOTA: postgresql-client ya está instalado en el Dockerfile
 wait_for_postgres
 run_migrations
 run_seed

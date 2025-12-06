@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   # ============================================
   # PostgreSQL Database (Ultra-Optimizado para 512MB RAM VPS)
@@ -111,7 +109,7 @@ services:
       db:
         condition: service_healthy
 
-    # Health check propio (complementa Dockerfile)
+    # Health check (sobrescribe el del Dockerfile para mayor control)
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
       interval: 30s
