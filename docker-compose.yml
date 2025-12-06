@@ -1,0 +1,49 @@
+
+
+services:
+  api-solid-pg:
+    # Usar imagen Alpine más ligera (menor tamaño)
+    image: postgres:16-alpine
+    container_name: optic-api-test-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: docker
+      POSTGRES_PASSWORD: docker
+      POSTGRES_DB: ignitenode03
+      # Configuración optimizada para tests (mínimos recursos)
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+      # Desactivar características innecesarias para tests
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+    # Límites de recursos para usar mínimos recursos
+    mem_limit: 256m  # Máximo 256MB RAM
+    mem_reservation: 128m  # Reservado 128MB RAM
+    cpus: '0.5'  # Máximo 0.5 CPU cores
+    # Configuración de PostgreSQL optimizada para tests
+    command: >
+      postgres
+      -c shared_buffers=64MB
+      -c effective_cache_size=128MB
+      -c maintenance_work_mem=32MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=80MB
+      -c max_wal_size=128MB
+      -c max_connections=20
+      -c log_statement=none
+      -c log_duration=off
+      -c log_line_prefix=''
+      -c logging_collector=off
+    # Reiniciar solo si falla (no automático)
+    restart: "no"
+    # Healthcheck ligero
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U docker -d ignitenode03"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s

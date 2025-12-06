@@ -1,0 +1,74 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Dependencies (se instalan en build)
+node_modules
+.pnpm-store
+.pnpm-debug.log*
+
+# Build outputs (se generan en build)
+build
+dist
+*.tsbuildinfo
+
+# Environment files (excepto .env.example)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.test
+.env.production
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Coverage y tests
+coverage
+*.lcov
+.nyc_output
+test-results
+playwright-report
+playwright/.cache
+.vitest
+**/__tests__
+**/*.test.ts
+**/*.e2e-test.ts
+vitest.*.config.ts
+
+# Editor y OS
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker (evitar recursión)
+.dockerignore
+docker-compose.yml
+docker-compose.dev.yml
+# NOTA: docker-compose.prod.yml SÍ se debe commitear para Dokploy
+
+# Documentación
+README.md
+CLAUDE.md
+GEMINI.md
+docs
+
+# Otros
+tmp
+temp
+.claude

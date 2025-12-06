@@ -122,10 +122,8 @@ playwright/.cache/
 .env.test
 .env
 
-# Docker
-.dockerignore
-Dockerfile
-docker-compose*.yml
+# Docker - Solo excluir archivos con valores sensibles
+# NOTA: Dockerfile, docker-compose.yml y .dockerignore SÍ se deben commitear
 
 # PM2
 ecosystem.config.js
